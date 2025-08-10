@@ -1,0 +1,8 @@
+Run this command to extract data from Via Rail and upload it to Google Cloud Storage using a Docker container:
+```bash
+docker run \
+  -v YOUR_CREDENTIAL_PATH \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/creds/key.json \
+  extract_shell_script \
+  sh -c "gcloud auth activate-service-account --key-file=/creds/key.json && sh /app/extract_to_gcs.sh"
+```

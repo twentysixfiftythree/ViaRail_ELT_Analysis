@@ -1,0 +1,19 @@
+id: vulture_577206
+namespace: via_rail_namespace
+
+tasks:
+  - id: extract_viarail_json
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: isaacwood111/extract_shell_script
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      config:
+        cpu:
+          cpus: 1
+    commands:
+      - |
+        set -e
+        printf '%s' '{{ kv("gcs_key") }}' > /tmp/key.json 2>&1
+        export GOOGLE_APPLICATION_CREDENTIALS=/tmp/key.json
+        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS --quiet 2>&1
+        sh /app/extract_to_gcs.sh 2>&1
