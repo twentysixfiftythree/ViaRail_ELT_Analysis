@@ -1,6 +1,11 @@
 id: vulture_577206
 namespace: via_rail_namespace
 
+triggers:
+  - id: 5minute_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/5 * * * *"
+
 tasks:
   - id: extract_viarail_json
     type: io.kestra.plugin.scripts.shell.Commands
@@ -11,6 +16,8 @@ tasks:
         cpu:
           cpus: 1
     commands:
+
+      #exits if any steps break
       - |
         set -e
         printf '%s' '{{ kv("gcs_key") }}' > /tmp/key.json 2>&1

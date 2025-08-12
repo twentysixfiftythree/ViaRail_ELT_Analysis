@@ -17,8 +17,8 @@ with open("${fname}", "w") as f:
     json.dump(output, f)
 EOF
 
-# Upload to GCS
+
 gcloud storage cp ${fname} gs://viarail-json-datalake/datafiles/${fname} --quiet
 
-# Clean up
+
 rm -f ${fname}
