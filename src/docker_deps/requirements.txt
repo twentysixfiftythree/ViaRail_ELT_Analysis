@@ -1,1 +1,2 @@
 google-cloud-storage
+grpcio==1.67.0

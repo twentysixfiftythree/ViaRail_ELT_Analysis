@@ -4,6 +4,9 @@ from pyspark.sql.functions import explode, col
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 from pyspark.sql.functions import xxhash64, abs
+from google.cloud import storage
+from process_lake import move_files_to_processed
+from load_to_bigquery import BigQueryLoader
 
 
 class BatchProcessor:
@@ -11,7 +14,7 @@ class BatchProcessor:
         self.spark = spark
         self.raw_data = raw_data
         self.tables = {}
-        # Set Spark logging to WARN to reduce output
+        # reduce output
         self.spark.sparkContext.setLogLevel("WARN")
 
     def build_prestaging_fact(self, df):
@@ -209,12 +212,17 @@ def main():
         .setMaster("local[*]")
         .setAppName("ViaRailProcessor")
         .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.jars", "/opt/bitnami/spark/jars/gcs-connector-hadoop3-2.2.5.jar")
         .set("spark.hadoop.google.cloud.auth.service.account.enable", "true")
         .set(
             "spark.hadoop.google.cloud.auth.service.account.json.keyfile",
             "/tmp/key.json",
         )
+        .set("spark.hadoop.fs.gs.project.id", "elt-viarail")  # Add your GCP project ID
+        .set("spark.hadoop.fs.gs.auth.service.account.json.keyfile", "/tmp/key.json")
+        .set("temporaryGcsBucket", "viarail-staging-bucket")
+        .set("spark.bigquery.projectId", "elt-viarail")
+        .set("spark.bigquery.parentProject", "elt-viarail")
+        .set("spark.bigquery.credentialsFile", "/tmp/key.json")
     )
 
     spark = SparkSession.builder.config(conf=conf).getOrCreate()
@@ -236,6 +244,14 @@ def main():
 
     print("\n📌 Sample from fact table:")
     tables["train_time_fact"].show(5, truncate=False)
+    print("Using BigQuery project:", spark.conf.get("spark.bigquery.projectId"))
+    print(
+        "Using billing project (parentProject):",
+        spark.conf.get("spark.bigquery.parentProject"),
+    )
+
+    loader = BigQueryLoader(spark, tables)
+    loader.load_staging_to_bigquery()
 
 
 if __name__ == "__main__":
