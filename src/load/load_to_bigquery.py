@@ -24,6 +24,10 @@ class BigQueryLoader:
             "table", "elt-viarail:viarail_staging_dataset.train_time_fact"
         ).option("parentProject", "elt-viarail").option(
             "credentialsFile", "/tmp/key.json"
+        ).option(
+            "partitionField", "train_instance_date"
+        ).option(
+            "clusteredFields", "train_instance_id"
         ).mode(
             "overwrite"
         ).save()
@@ -51,6 +55,8 @@ class BigQueryLoader:
             "table", "elt-viarail:viarail_staging_dataset.train_position_fact"
         ).option("parentProject", "elt-viarail").option(
             "credentialsFile", "/tmp/key.json"
+        ).option(
+            "partitionField", "train_instance_date"
         ).mode(
             "overwrite"
         ).save()

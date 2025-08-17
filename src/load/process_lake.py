@@ -16,14 +16,12 @@ def move_files_to_processed(bucket_name, source_prefix, processed_prefix="proces
     blobs = bucket.list_blobs(prefix=source_prefix)
 
     for blob in blobs:
-        # Skip if blob is a "folder" or not a JSON file (optional)
         if blob.name.endswith("/") or not blob.name.endswith(".json"):
             continue
 
         filename = blob.name.split("/")[-1]
         destination_blob_name = f"{processed_prefix.rstrip('/')}/{filename}"
 
-        # Copy and delete original
         bucket.copy_blob(blob, bucket, destination_blob_name)
         blob.delete()
 

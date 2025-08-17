@@ -98,7 +98,7 @@ class BatchProcessor:
         # -----------------
         train_positions_fact = self.spark.sql(
             """
-            SELECT DISTINCT train_instance_id, train_id, train_instance_date,
+            SELECT DISTINCT train_instance_id, train_id, CAST(train_instance_date AS DATE),
                    collected_at, latitude, longitude, speed, direction
             FROM train_times_staging
             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
@@ -153,15 +153,27 @@ class BatchProcessor:
     def build_fact_table(self):
         train_time_fact = self.spark.sql(
             """
-        SELECT train_id, arrived, departed, train_instance_date, estimated,
-            scheduled, eta, diff, diffMin,
-            departure_estimated, departure_scheduled, arrival_eta, arrival_scheduled,
-            train_instance_id, collected_at,
-            ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING))) % 100000000) AS train_stop_id
-        FROM train_times_staging
-
-        """
+            SELECT
+                train_id,
+                arrived,
+                departed,
+                CAST (train_instance_date AS DATE) AS train_instance_date,
+                estimated,
+                CAST(scheduled AS TIMESTAMP) AS scheduled,
+                eta,
+                diff,
+                diffMin,
+                CAST(departure_estimated AS TIMESTAMP) AS departure_estimated,
+                CAST(departure_scheduled AS TIMESTAMP) AS departure_scheduled,
+                CAST(arrival_eta AS TIMESTAMP) AS arrival_eta,
+                CAST(arrival_scheduled AS TIMESTAMP) AS arrival_scheduled,
+                train_instance_id,
+                CAST(collected_at AS TIMESTAMP) AS collected_at,
+                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING))) % 100000000) AS train_stop_id
+            FROM train_times_staging
+            """
         )
+
         self.tables["train_time_fact"] = train_time_fact
 
     def show_statistics(self):
@@ -187,7 +199,8 @@ class BatchProcessor:
 
             self.build_fact_table()
 
-            self.show_statistics()
+            # takes too much time
+            # self.show_statistics()
 
             print("🎉 Batch processing completed successfully!")
             return self.tables
