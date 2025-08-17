@@ -44,4 +44,11 @@ terraform.rc
 # Uncomment the line below if you want to ignore planout files.
 # planout
 
-/__pycache__
+__pycache__/
+
+target/
+dbt_packages/
+logs/
+
+# legacy -- renamed to dbt_packages in v1
+dbt_modules/

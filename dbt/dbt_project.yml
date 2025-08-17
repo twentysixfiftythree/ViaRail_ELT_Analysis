@@ -1,0 +1,15 @@
+name: 'viarail_project'
+version: '1.0'
+config-version: 2
+
+profile: 'viarail_profile'  
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_modules"
+
+models:
+  viarail_project:  
+    +schema: viarail_dataset  
