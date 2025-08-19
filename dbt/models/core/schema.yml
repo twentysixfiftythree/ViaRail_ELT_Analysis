@@ -1,0 +1,11 @@
+sources:
+  - name: staging
+    database: "{{var('gcp_project_id')}}"
+    schema: viarail_staging_dataset
+    tables:
+      - name: train_time_fact
+      - name: train_position_fact
+      - name: train_time_dim
+      - name: train_dim
+      - name: station_dim
+      - name: route_stop_dim

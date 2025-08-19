@@ -7,6 +7,7 @@ from pyspark.sql.functions import xxhash64, abs
 from google.cloud import storage
 from process_lake import move_files_to_processed
 from load_to_bigquery import BigQueryLoader
+from pyspark.sql.functions import split, concat_ws, to_timestamp
 
 
 class BatchProcessor:
@@ -28,6 +29,7 @@ class BatchProcessor:
                 "to",
                 "arrived",
                 "departed",
+                col("collected_at_t").alias("collected_at_t"),
                 col("instance").alias("train_instance_date"),
                 col("time_elements.station").alias("station"),
                 col("time_elements.code").alias("code"),
@@ -41,7 +43,6 @@ class BatchProcessor:
                 col("time_elements.arrival.estimated").alias("arrival_eta"),
                 col("time_elements.arrival.scheduled").alias("arrival_scheduled"),
                 col("train_instance_id").alias("train_instance_id"),
-                col("collected_at").alias("collected_at"),
                 col("lat").alias("latitude"),
                 col("lng").alias("longitude"),
                 col("speed").alias("speed"),
@@ -79,7 +80,7 @@ class BatchProcessor:
               t.station, t.code, t.estimated,
               t.scheduled, t.eta, t.diff, t.diffMin,
               t.departure_estimated, t.departure_scheduled, t.arrival_eta, t.arrival_scheduled,
-              t.train_instance_id, t.collected_at, t.latitude, t.longitude, t.speed, t.direction, s.stop_number AS stop_number FROM train_times t
+              t.train_instance_id, t.collected_at_t, t.latitude, t.longitude, t.speed, t.direction, s.stop_number AS stop_number FROM train_times t
               LEFT JOIN distinct_stops s ON t.train_instance_id = s.train_instance_id AND t.code = s.code"""
         )
 
@@ -99,7 +100,7 @@ class BatchProcessor:
         train_positions_fact = self.spark.sql(
             """
             SELECT DISTINCT train_instance_id, train_id, CAST(train_instance_date AS DATE),
-                   collected_at, latitude, longitude, speed, direction
+                   collected_at_t, latitude, longitude, speed, direction
             FROM train_times_staging
             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
         """
@@ -154,6 +155,14 @@ class BatchProcessor:
         train_time_fact = self.spark.sql(
             """
             SELECT
+                    ABS(
+                        XXHASH64(
+                        CONCAT(
+                        CAST(ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING))) % 100000000) AS STRING),
+                        CAST(collected_at_t AS STRING)
+                        )
+                    ) % 100000000
+                ) AS train_stop_record_id,
                 train_id,
                 arrived,
                 departed,
@@ -168,7 +177,7 @@ class BatchProcessor:
                 CAST(arrival_eta AS TIMESTAMP) AS arrival_eta,
                 CAST(arrival_scheduled AS TIMESTAMP) AS arrival_scheduled,
                 train_instance_id,
-                CAST(collected_at AS TIMESTAMP) AS collected_at,
+                CAST(collected_at_t AS TIMESTAMP) AS collected_at,
                 ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING))) % 100000000) AS train_stop_id
             FROM train_times_staging
             """
@@ -245,6 +254,24 @@ def main():
     # ;oad data from GCS
     raw_data = spark.read.json("gs://viarail-json-datalake/datafiles/*.json")
 
+    raw_data = raw_data.withColumn("parts", split("collected_at", "_"))
+
+    # Step 2: Reconstruct the timestamp string and parse it
+    raw_data = raw_data.withColumn(
+        "collected_at_t",
+        to_timestamp(
+            concat_ws(
+                " ",
+                raw_data["parts"].getItem(0),  # Date part: "2025-08-16"
+                concat_ws(
+                    ":",  # Time part: "08:30"
+                    raw_data["parts"].getItem(1),  # Hour: "08"
+                    raw_data["parts"].getItem(2),  # Minute: "30"
+                ),
+            ),
+            "yyyy-MM-dd HH:mm",
+        ),
+    )
     print("📂 Raw Data Schema:")
     raw_data.printSchema()
 
@@ -265,6 +292,7 @@ def main():
 
     loader = BigQueryLoader(spark, tables)
     loader.load_staging_to_bigquery()
+    move_files_to_processed("viarail-json-datalake", "datafiles")
 
 
 if __name__ == "__main__":
