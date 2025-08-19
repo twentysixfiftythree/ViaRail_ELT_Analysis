@@ -139,7 +139,7 @@ class BatchProcessor:
                 train_id,
                 code as station_code,
                 stop_number,
-                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING))) % 100000000) AS train_stop_id
+                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING)))) AS train_stop_id
             FROM train_times_staging
         """
         )
@@ -158,10 +158,10 @@ class BatchProcessor:
                     ABS(
                         XXHASH64(
                         CONCAT(
-                        CAST(ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING))) % 100000000) AS STRING),
+                        CAST(ABS(XXHASH64(CONCAT(CAST(train_instance_id AS STRING), CAST(stop_number AS STRING)))) AS STRING),
                         CAST(collected_at_t AS STRING)
                         )
-                    ) % 100000000
+                    )
                 ) AS train_stop_record_id,
                 train_id,
                 arrived,
@@ -178,7 +178,7 @@ class BatchProcessor:
                 CAST(arrival_scheduled AS TIMESTAMP) AS arrival_scheduled,
                 train_instance_id,
                 CAST(collected_at_t AS TIMESTAMP) AS collected_at,
-                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING))) % 100000000) AS train_stop_id
+                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING)))) AS train_stop_id
             FROM train_times_staging
             """
         )
