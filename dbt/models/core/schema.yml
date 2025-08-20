@@ -1,5 +1,5 @@
 sources:
-  - name: staging
+  - name: core
     database: "{{var('gcp_project_id')}}"
     schema: viarail_staging_dataset
     tables:

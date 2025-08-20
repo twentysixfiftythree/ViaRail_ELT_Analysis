@@ -13,7 +13,7 @@ clean-targets:
 
 models:
   viarail_project:
-    staging:
+    core:
       materialized: incremental
     intermediate:
       materialized: table
