@@ -99,7 +99,16 @@ class BatchProcessor:
         # -----------------
         train_positions_fact = self.spark.sql(
             """
-            SELECT DISTINCT train_instance_id, train_id, CAST(train_instance_date AS DATE),
+        SELECT DISTINCT
+            ABS(
+                XXHASH64(
+                    CONCAT(
+                        CAST(ABS(XXHASH64(CONCAT(CAST(train_instance_id AS STRING), CAST(stop_number AS STRING)))) AS STRING),
+                        CAST(collected_at_t AS STRING)
+                    )
+                )
+            ) AS train_stop_record_id,
+            train_instance_id, train_id, CAST(train_instance_date AS DATE),
                    collected_at_t, latitude, longitude, speed, direction
             FROM train_times_staging
             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
@@ -139,7 +148,7 @@ class BatchProcessor:
                 train_id,
                 code as station_code,
                 stop_number,
-                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING)))) AS train_stop_id
+                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING), CAST(code AS STRING)))) AS train_stop_id
             FROM train_times_staging
         """
         )
@@ -178,7 +187,7 @@ class BatchProcessor:
                 CAST(arrival_scheduled AS TIMESTAMP) AS arrival_scheduled,
                 train_instance_id,
                 CAST(collected_at_t AS TIMESTAMP) AS collected_at,
-                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING)))) AS train_stop_id
+                ABS(XXHASH64(CONCAT(CAST(train_id AS STRING), CAST(stop_number AS STRING), CAST(code AS STRING)))) AS train_stop_id
             FROM train_times_staging
             """
         )
@@ -239,7 +248,7 @@ def main():
             "spark.hadoop.google.cloud.auth.service.account.json.keyfile",
             "/tmp/key.json",
         )
-        .set("spark.hadoop.fs.gs.project.id", "elt-viarail")  # Add your GCP project ID
+        .set("spark.hadoop.fs.gs.project.id", "elt-viarail")
         .set("spark.hadoop.fs.gs.auth.service.account.json.keyfile", "/tmp/key.json")
         .set("temporaryGcsBucket", "viarail-staging-bucket")
         .set("spark.bigquery.projectId", "elt-viarail")
@@ -256,7 +265,6 @@ def main():
 
     raw_data = raw_data.withColumn("parts", split("collected_at", "_"))
 
-    # Step 2: Reconstruct the timestamp string and parse it
     raw_data = raw_data.withColumn(
         "collected_at_t",
         to_timestamp(

@@ -13,7 +13,7 @@ RUN curl -L https://repo1.maven.org/maven2/com/google/cloud/spark/spark-bigquery
   
 
 
-# ✅ Download missing dependency (javax.inject)
+# download missing dependency (javax.inject)
 RUN curl -L https://repo1.maven.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar \
     -o /opt/bitnami/spark/jars/javax.inject-1.jar
 

@@ -4,4 +4,4 @@
     unique_key='train_instance_date')
     }}
 
-SELECT * FROM {{source('core', 'time_dim')}}
+SELECT * FROM {{source('core', 'train_time_dim')}}
