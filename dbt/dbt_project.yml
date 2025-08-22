@@ -15,9 +15,7 @@ models:
   viarail_project:
     core:
       materialized: incremental
-    intermediate:
-      materialized: table
-    mart:
+    marts:
       materialized: view
 vars:
   gcp_project_id: elt-viarail

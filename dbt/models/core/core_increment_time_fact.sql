@@ -15,7 +15,8 @@
 
 -- collected at is from the current loaded data into core
 --changed to core
-SELECT * FROM {{source('core', 'train_time_fact')}}
+SELECT train_stop_record_id, train_id, arrived, departed, train_instance_date, estimated, scheduled, eta, diff, diffMin, departure_estimated, departure_scheduled, arrival_eta, arrival_scheduled, train_instance_id, collected_at, train_stop_id
+FROM {{source('core', 'train_time_fact')}}
 {% if is_incremental() %}
 WHERE collected_at > (SELECT MAX(collected_at) FROM {{this}})
 {% endif %}

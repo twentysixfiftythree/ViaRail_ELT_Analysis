@@ -1,7 +1,8 @@
 sources:
-  - name: core
+  - name: marts
     database: "{{var('gcp_project_id')}}"
     schema: viarail_dataset
     tables:
       - name: core_increment_time_fact
       - name: core_increment_route_stop_dim
+      - name: core_increment_train_dim
