@@ -6,6 +6,8 @@ WITH ranked_trains AS (
     f.train_id,
     f.arrival_eta,
     f.arrival_scheduled,
+    f.departure_estimated,
+    f.departure_scheduled,
     f.stop_number,
     d.from_loc AS departing_location,
     d.to_loc AS final_arrival_destination,
@@ -22,7 +24,9 @@ SELECT
   arrival_eta,
   arrival_scheduled,
   departing_location,
-  final_arrival_destination
+  final_arrival_destination,
+  departure_estimated,
+  departure_scheduled
 FROM ranked_trains
 WHERE rn = 1
 ORDER BY train_instance_id
