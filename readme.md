@@ -29,6 +29,7 @@ The project is broken down into a few steps listed here.
 3. Using incremental models in DBT, the fact and dim tables are created/updated in the "prod" dataset.
 4. Data marts are created for stop-by-stop performance, and end-to-end train delay analysis.
 
+<img width="1477" height="683" alt="vrpipeline drawio" src="https://github.com/user-attachments/assets/9f91e8c3-dd8b-4710-a81e-d31ddcdab550" />
 
 
 ## Star Schema Overview
