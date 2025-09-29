@@ -1,7 +1,7 @@
 
 ## What this is
 
-This is a personal data engineering project I built mostly for fun -- and out of frustration -- to analyze how consistently delayed ViaRail trains are. I wanted to turn my annoyance into something mildly productive, and this ended up being a full-stack ELT-LT data pipeline from ingestion to dashboard.
+This is a personal data engineering project I built mostly for fun -- and out of frustration -- to analyze how consistently delayed ViaRail trains are. I wanted to turn my annoyance into something mildly productive, and this ended up being a full-stack ELT-TL data pipeline from ingestion to dashboard.
 Every few minutes, the system fetches live train movement data from ViaRail’s (not-so-documented) API, loads it into a BigQuery warehouse, models it with DBT, and displays insights in Looker Studio.
 The main questions I’m exploring:
  - How often are trains delayed?
